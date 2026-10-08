@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destinations – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .dest-card { position: relative; border-radius: var(--radius); overflow: hidden; cursor: pointer; box-shadow: var(--shadow); }
+        .dest-card img { width: 100%; height: 260px; object-fit: cover; transition: var(--transition); }
+        .dest-card:hover img { transform: scale(1.05); }
+        .dest-card .dest-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            color: white; padding: 30px 20px 20px;
+        }
+        .dest-card .dest-info h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+        .dest-card .dest-info p { font-size: 0.85rem; opacity: 0.85; }
+        .dest-card .explore-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            border: none; color: white; padding: 6px 14px; border-radius: 50px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition);
+        }
+        .dest-card:hover .explore-btn { background: var(--primary); }
+        .filter-bar {
+            display: flex; gap: 15px; align-items: center;
+            background: white; padding: 20px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="destinations.html" class="active">Destinations</a></li>
+        <li><a href="hotels.html">Hotels</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+        <a href="login.html" id="navLogin"><button class="btn btn-outline">Login</button></a>
+        <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1>🌏 Explore Destinations</h1>
+    <p>Discover amazing places and plan your next great adventure</p>
+</div>
+
+<section class="section">
+    <div class="filter-bar">
+        <input type="text" class="form-control" id="searchInput" placeholder="🔍 Search destinations..." style="max-width:300px" oninput="filterDestinations()">
+        <span style="color:var(--gray);font-size:0.9rem" id="countDisplay">Loading...</span>
+    </div>
+    <div class="grid-3" id="destinationsGrid">
+        <div class="spinner"></div>
+    </div>
+</section>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    let allDestinations = [];
+
+    async function loadDestinations() {
+        try {
+            allDestinations = await fetch(`${API_BASE}/destinations`).then(r => r.json());
+            renderDestinations(allDestinations);
+        } catch(e) {
+            allDestinations = [
+                {id:1, name:'Goa', country:'India', state:'Goa', description:'Beautiful beaches, vibrant nightlife and Portuguese heritage.', imageUrl:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400', bestTimeToVisit:'October–March'},
+                {id:2, name:'Manali', country:'India', state:'Himachal Pradesh', description:'Snow-capped mountains, adventure sports and scenic valleys.', imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400', bestTimeToVisit:'April–June'},
+                {id:3, name:'Jaipur', country:'India', state:'Rajasthan', description:'The Pink City with royal palaces and rich Rajasthani culture.', imageUrl:'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400', bestTimeToVisit:'November–February'},
+                {id:4, name:'Kerala', country:'India', state:'Kerala', description:'God\'s own country with backwaters, spices and serene beaches.', imageUrl:'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=400', bestTimeToVisit:'September–March'},
+                {id:5, name:'Darjeeling', country:'India', state:'West Bengal', description:'Tea gardens, mountain views and the famous toy train ride.', imageUrl:'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=400', bestTimeToVisit:'March–May'},
+                {id:6, name:'Udaipur', country:'India', state:'Rajasthan', description:'City of Lakes with stunning palaces and romantic atmosphere.', imageUrl:'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=400', bestTimeToVisit:'October–March'}
+            ];
+            renderDestinations(allDestinations);
+        }
+    }
+
+    function renderDestinations(destinations) {
+        const grid = document.getElementById('destinationsGrid');
+        document.getElementById('countDisplay').textContent = `${destinations.length} destinations found`;
+        if (!destinations.length) {
+            grid.innerHTML = '<p style="color:var(--gray)">No destinations found.</p>';
+            return;
+        }
+        grid.innerHTML = destinations.map(d => `
+            <div class="dest-card">
+                <img src="${d.imageUrl || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400'}" 
+                     alt="${d.name}" onerror="this.src='https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400'">
+                <button class="explore-btn" onclick="exploreDestination(${d.id})">Explore →</button>
+                <div class="dest-info">
+                    <h3>🏔️ ${d.name}</h3>
+                    <p>${d.state ? d.state + ', ' : ''}${d.country || 'India'}</p>
+                    ${d.bestTimeToVisit ? `<p>Best Time: ${d.bestTimeToVisit}</p>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterDestinations() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderDestinations(allDestinations.filter(d =>
+            d.name.toLowerCase().includes(q) ||
+            (d.country && d.country.toLowerCase().includes(q)) ||
+            (d.state && d.state.toLowerCase().includes(q))
+        ));
+    }
+
+    function exploreDestination(id) {
+        window.location.href = `packages.html?destination=${id}`;
+    }
+
+    loadDestinations();
+</script>
+</body>
+</html>

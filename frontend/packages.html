@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Packages – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .pkg-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: var(--transition); }
+        .pkg-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+        .pkg-card img { width: 100%; height: 200px; object-fit: cover; }
+        .pkg-card .pkg-body { padding: 20px; }
+        .pkg-card .pkg-meta { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .pkg-card .meta-tag { background: #f0f4ff; color: var(--primary); padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
+        .filter-bar { display: flex; gap: 15px; background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 30px; flex-wrap: wrap; align-items: flex-end; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="destinations.html">Destinations</a></li>
+        <li><a href="hotels.html">Hotels</a></li>
+        <li><a href="packages.html" class="active">Packages</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+        <a href="login.html" id="navLogin"><button class="btn btn-outline">Login</button></a>
+        <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1>✈️ Travel Packages</h1>
+    <p>Find your perfect trip — all-inclusive packages at the best prices</p>
+</div>
+
+<section class="section">
+    <div class="filter-bar">
+        <div class="form-group" style="margin:0;flex:1;min-width:200px">
+            <label class="form-label">🔍 Search</label>
+            <input type="text" class="form-control" id="searchInput" placeholder="Package name..." oninput="filterPackages()">
+        </div>
+        <div class="form-group" style="margin:0">
+            <label class="form-label">⏱ Duration</label>
+            <select class="form-control" id="durationFilter" onchange="filterPackages()">
+                <option value="">All Durations</option>
+                <option value="3">Up to 3 Days</option>
+                <option value="5">Up to 5 Days</option>
+                <option value="7">Up to 7 Days</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0">
+            <label class="form-label">💰 Max Price</label>
+            <select class="form-control" id="priceFilter" onchange="filterPackages()">
+                <option value="">All Prices</option>
+                <option value="10000">Under ₹10,000</option>
+                <option value="20000">Under ₹20,000</option>
+                <option value="30000">Under ₹30,000</option>
+            </select>
+        </div>
+        <span style="color:var(--gray);font-size:0.9rem;white-space:nowrap" id="countDisplay">Loading...</span>
+    </div>
+
+    <div class="grid-3" id="packagesGrid">
+        <div class="spinner"></div>
+    </div>
+</section>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    let allPackages = [];
+
+    async function loadPackages() {
+        // Check URL params for pre-filter
+        const params = new URLSearchParams(window.location.search);
+        const search = params.get('search');
+        const destId = params.get('destination');
+        if (search) document.getElementById('searchInput').value = search;
+
+        try {
+            allPackages = await fetch(`${API_BASE}/packages`).then(r => r.json());
+        } catch(e) {
+            allPackages = [
+                {id:1, name:'Goa Beach Explorer', durationDays:4, price:15000, description:'Enjoy 4 days of sun, sand and seafood in beautiful Goa.', imageUrl:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400', inclusions:'Hotel Stay,Breakfast,Airport Transfer,Beach Tour', destination:{id:1, name:'Goa'}, isActive:true},
+                {id:2, name:'Manali Snow Adventure', durationDays:5, price:20000, description:'5 days of adventure in the snow-clad mountains of Manali.', imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400', inclusions:'Hotel Stay,All Meals,Adventure Activities,Sightseeing', destination:{id:2, name:'Manali'}, isActive:true},
+                {id:3, name:'Jaipur Royal Heritage', durationDays:3, price:12000, description:'Explore the Pink City palaces and vibrant Rajasthani culture.', imageUrl:'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400', inclusions:'Hotel Stay,Breakfast,Palace Tours,Cultural Show', destination:{id:3, name:'Jaipur'}, isActive:true},
+                {id:4, name:'Kerala Backwater Bliss', durationDays:6, price:25000, description:'Cruise through serene backwaters and enjoy Ayurvedic spa.', imageUrl:'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=400', inclusions:'Houseboat Stay,All Meals,Backwater Cruise,Spa Session', destination:{id:4, name:'Kerala'}, isActive:true},
+                {id:5, name:'Darjeeling Tea Trail', durationDays:4, price:18000, description:'Experience tea gardens, toy train and Himalayan sunrise.', imageUrl:'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=400', inclusions:'Hotel Stay,Breakfast,Toy Train,Tea Garden Tour', destination:{id:5, name:'Darjeeling'}, isActive:true},
+                {id:6, name:'Udaipur Lake Romance', durationDays:3, price:14000, description:'Romantic getaway in the City of Lakes with palace boat rides.', imageUrl:'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=400', inclusions:'Heritage Hotel,Breakfast,Boat Ride,Palace Tour', destination:{id:6, name:'Udaipur'}, isActive:true},
+            ];
+        }
+
+        if (destId) {
+            allPackages = allPackages.filter(p => p.destination && String(p.destination.id) === destId);
+        }
+        filterPackages();
+    }
+
+    function filterPackages() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const dur = parseInt(document.getElementById('durationFilter').value) || Infinity;
+        const price = parseFloat(document.getElementById('priceFilter').value) || Infinity;
+
+        const filtered = allPackages.filter(p =>
+            (p.name.toLowerCase().includes(q) || (p.destination?.name || '').toLowerCase().includes(q)) &&
+            (p.durationDays || 0) <= dur &&
+            (p.price || 0) <= price
+        );
+        renderPackages(filtered);
+    }
+
+    function renderPackages(packages) {
+        const grid = document.getElementById('packagesGrid');
+        document.getElementById('countDisplay').textContent = `${packages.length} packages found`;
+        if (!packages.length) {
+            grid.innerHTML = '<p style="color:var(--gray)">No packages found. Try different filters.</p>';
+            return;
+        }
+        grid.innerHTML = packages.map(p => `
+            <div class="pkg-card">
+                <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400'}" 
+                     alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400'">
+                <div class="pkg-body">
+                    <h3 class="card-title">${p.name}</h3>
+                    <div class="pkg-meta">
+                        <span class="meta-tag">📍 ${p.destination?.name || 'India'}</span>
+                        <span class="meta-tag">📅 ${p.durationDays} Days</span>
+                    </div>
+                    <p class="card-text">${(p.description || '').substring(0, 100)}...</p>
+                    ${p.inclusions ? `<p style="font-size:0.8rem;color:var(--success);margin-bottom:12px">✅ ${p.inclusions.split(',').slice(0,3).join(' • ')}</p>` : ''}
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <span class="price">${formatCurrency(p.price)}</span>
+                            <span class="price-small"> /person</span>
+                        </div>
+                        <a href="package-details.html?id=${p.id}">
+                            <button class="btn btn-primary" style="padding:8px 18px;font-size:0.85rem">View Details</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadPackages();
+</script>
+</body>
+</html>

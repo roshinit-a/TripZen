@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="auth-page">
+
+<div class="auth-card">
+    <div style="text-align:center;margin-bottom:30px">
+        <a href="index.html" style="font-size:2rem;font-weight:800;color:var(--primary)">Trip<span style="color:var(--secondary)">Zen</span> ✈️</a>
+    </div>
+    <h2>Welcome Back! 👋</h2>
+    <p class="subtitle">Login to continue your journey</p>
+
+    <div id="alertContainer"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+            <label class="form-label"><i class="fas fa-envelope"></i> Email Address</label>
+            <input type="email" class="form-control" id="email" placeholder="your@email.com" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label"><i class="fas fa-lock"></i> Password</label>
+            <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="loginBtn" style="width:100%;justify-content:center;margin-top:10px">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+    </form>
+
+    <p style="text-align:center;margin-top:20px;color:var(--gray)">
+        Don't have an account? 
+        <a href="register.html" style="color:var(--primary);font-weight:600">Register here</a>
+    </p>
+
+    <div style="margin-top:20px;padding:15px;background:#f0f4ff;border-radius:var(--radius);font-size:0.85rem">
+        <strong>Test Credentials:</strong><br>
+        🧑 User: user@tripzen.com / <strong>user123</strong><br>
+        👑 Admin: admin@tripzen.com / <strong>admin123</strong>
+    </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+    // Redirect if already logged in
+    if (isLoggedIn()) {
+        window.location.href = isAdmin()
+            ? 'admin/admin-dashboard.html'
+            : 'index.html';
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        btn.disabled = true;
+
+        try {
+            const data = await apiPost('/auth/login', {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            });
+
+            saveAuth(data);
+            showAlert('alertContainer', '✅ Login successful! Redirecting...', 'success');
+
+            setTimeout(() => {
+                window.location.href = data.role === 'ADMIN'
+                    ? 'admin/admin-dashboard.html'
+                    : 'index.html';
+            }, 1000);
+
+        } catch(err) {
+            showAlert('alertContainer', '❌ ' + err.message, 'error');
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Hotels – TripZen Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { display: flex; min-height: 100vh; background: #f0f4ff; }
+        .sidebar { width: 260px; background: var(--dark); color: white; padding: 30px 0; flex-shrink: 0; min-height: 100vh; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .sidebar .brand { padding: 0 25px 30px; font-size: 1.6rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .sidebar .brand span { color: var(--secondary); }
+        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 13px 25px; color: #ccc; font-weight: 500; transition: var(--transition); border-left: 3px solid transparent; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--secondary); }
+        .sidebar nav a i { width: 20px; text-align: center; }
+        .sidebar .logout { margin-top: auto; padding: 20px 25px 0; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .data-table { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .data-table .table-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-light); }
+        .data-table table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #f8f9ff; padding: 13px 20px; text-align: left; font-size: 0.85rem; font-weight: 700; color: var(--gray); border-bottom: 2px solid var(--gray-light); }
+        .data-table td { padding: 12px 20px; font-size: 0.88rem; border-bottom: 1px solid var(--gray-light); }
+        .data-table tr:hover td { background: #fafbff; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: var(--radius-lg); padding: 35px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; color: var(--dark); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="brand">Trip<span>Zen</span> ✈️</div>
+    <nav>
+        <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="manage-users.html"><i class="fas fa-users"></i> Users</a>
+        <a href="manage-destinations.html"><i class="fas fa-map-marker-alt"></i> Destinations</a>
+        <a href="manage-hotels.html" class="active"><i class="fas fa-hotel"></i> Hotels</a>
+        <a href="manage-packages.html"><i class="fas fa-suitcase"></i> Packages</a>
+        <a href="manage-bookings.html"><i class="fas fa-calendar-check"></i> Bookings</a>
+        <a href="manage-payments.html"><i class="fas fa-credit-card"></i> Payments</a>
+    </nav>
+    <div class="logout">
+        <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+
+<div class="main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px">
+        <h1 style="font-size:1.8rem;font-weight:800;color:var(--dark)">🏨 Manage Hotels</h1>
+        <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Add Hotel</button>
+    </div>
+    <div id="alertContainer"></div>
+    <div class="data-table">
+        <div class="table-header">
+            <h3>All Hotels</h3>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search..." style="max-width:220px" oninput="filterTable()">
+        </div>
+        <div id="tableBody"><div class="spinner"></div></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h2 id="modalTitle">➕ Add Hotel</h2>
+        <div id="modalAlert"></div>
+        <form id="hotelForm" onsubmit="saveHotel(event)">
+            <input type="hidden" id="editId">
+            <div class="form-group"><label class="form-label">Hotel Name *</label><input type="text" class="form-control" id="hotelName" required placeholder="E.g. The Grand Resort"></div>
+            <div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-control" id="hotelLocation" required placeholder="E.g. North Goa"></div>
+            <div class="form-group"><label class="form-label">Destination ID *</label><input type="number" class="form-control" id="hotelDestId" required placeholder="1"></div>
+            <div class="grid-2">
+                <div class="form-group"><label class="form-label">Price/Night (₹) *</label><input type="number" class="form-control" id="hotelPrice" required placeholder="3000"></div>
+                <div class="form-group"><label class="form-label">Rating (1-5)</label><input type="number" class="form-control" id="hotelRating" min="1" max="5" step="0.1" placeholder="4.5"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Available Rooms</label><input type="number" class="form-control" id="hotelRooms" placeholder="10"></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="hotelDesc" rows="2" placeholder="Hotel description..."></textarea></div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="text" class="form-control" id="hotelImage" placeholder="https://..."></div>
+            <div style="display:flex;gap:15px;margin-top:10px">
+                <button type="submit" class="btn btn-primary" id="saveBtn" style="flex:1;justify-content:center"><i class="fas fa-save"></i> Save</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal()" style="flex:1;justify-content:center">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script>
+    if (!isLoggedIn() || !isAdmin()) window.location.href = '../login.html';
+    let hotels = [];
+    async function loadHotels() {
+        try {
+            hotels = await fetch(`${API_BASE}/hotels`).then(r => r.json());
+            renderTable(hotels);
+        } catch(e) {
+            hotels = [
+                {id:1, name:'Grand Goa Resort', location:'North Goa', pricePerNight:4500, rating:4.5, availableRooms:8, destination:{id:1, name:'Goa'}},
+                {id:2, name:'Manali Snow Peak', location:'Mall Road', pricePerNight:3200, rating:4.2, availableRooms:12, destination:{id:2, name:'Manali'}},
+            ];
+            renderTable(hotels);
+        }
+    }
+    function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = `
+            <table>
+                <thead><tr><th>#</th><th>Name</th><th>Location</th><th>Destination</th><th>Price/Night</th><th>Rating</th><th>Rooms</th><th>Actions</th></tr></thead>
+                <tbody>${data.map(h => `
+                    <tr>
+                        <td>#${h.id}</td>
+                        <td><strong>${h.name}</strong></td>
+                        <td>${h.location}</td>
+                        <td>${h.destination?.name || '—'}</td>
+                        <td>${formatCurrency(h.pricePerNight)}</td>
+                        <td>⭐ ${h.rating}</td>
+                        <td>${h.availableRooms}</td>
+                        <td>
+                            <button class="btn" style="background:#cce5ff;color:#004085;padding:5px 12px;font-size:0.8rem" onclick="editHotel(${h.id})">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding:5px 12px;font-size:0.8rem;margin-left:5px" onclick="deleteHotel(${h.id})">🗑️ Delete</button>
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>`;
+    }
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderTable(hotels.filter(h => h.name.toLowerCase().includes(q) || (h.location || '').toLowerCase().includes(q)));
+    }
+    function openModal(h = null) {
+        document.getElementById('modalTitle').textContent = h ? '✏️ Edit Hotel' : '➕ Add Hotel';
+        document.getElementById('editId').value = h?.id || '';
+        document.getElementById('hotelName').value = h?.name || '';
+        document.getElementById('hotelLocation').value = h?.location || '';
+        document.getElementById('hotelDestId').value = h?.destination?.id || '';
+        document.getElementById('hotelPrice').value = h?.pricePerNight || '';
+        document.getElementById('hotelRating').value = h?.rating || '';
+        document.getElementById('hotelRooms').value = h?.availableRooms || '';
+        document.getElementById('hotelDesc').value = h?.description || '';
+        document.getElementById('hotelImage').value = h?.imageUrl || '';
+        document.getElementById('modalOverlay').classList.add('show');
+    }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); document.getElementById('modalAlert').innerHTML = ''; }
+    function editHotel(id) { openModal(hotels.find(h => h.id === id)); }
+    async function saveHotel(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const btn = document.getElementById('saveBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; btn.disabled = true;
+        const payload = { name: document.getElementById('hotelName').value, location: document.getElementById('hotelLocation').value, pricePerNight: parseFloat(document.getElementById('hotelPrice').value), rating: parseFloat(document.getElementById('hotelRating').value), availableRooms: parseInt(document.getElementById('hotelRooms').value), description: document.getElementById('hotelDesc').value, imageUrl: document.getElementById('hotelImage').value, destination: { id: parseInt(document.getElementById('hotelDestId').value) } };
+        try {
+            if (id) await apiPut(`/hotels/${id}`, payload);
+            else await apiPost('/hotels', payload, true);
+            showAlert('alertContainer', '✅ Hotel saved!', 'success');
+            closeModal(); loadHotels();
+        } catch(err) { document.getElementById('modalAlert').innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`; }
+        btn.innerHTML = '<i class="fas fa-save"></i> Save'; btn.disabled = false;
+    }
+    async function deleteHotel(id) {
+        if (!confirm('Delete this hotel?')) return;
+        try { await apiDelete(`/hotels/${id}`); showAlert('alertContainer', '✅ Deleted.', 'success'); loadHotels(); }
+        catch(e) { showAlert('alertContainer', '❌ Failed.', 'error'); }
+    }
+    loadHotels();
+</script>
+</body>
+</html>

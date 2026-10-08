@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Trip – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .booking-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 35px; }
+        .pkg-summary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-radius: var(--radius); padding: 25px; margin-bottom: 25px; }
+        .total-section { background: #f0f4ff; border-radius: var(--radius); padding: 20px; margin: 20px 0; border-left: 4px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="packages.html">← Back to Packages</a></li>
+    </ul>
+    <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+</nav>
+
+<div class="booking-page">
+    <div id="alertContainer"></div>
+
+    <div class="booking-card">
+        <h1 style="font-size:2rem;font-weight:800;color:var(--dark);margin-bottom:5px">🎒 Book Your Trip</h1>
+        <p style="color:var(--gray);margin-bottom:25px">Complete the form below to confirm your booking</p>
+
+        <!-- Package Summary -->
+        <div class="pkg-summary" id="pkgSummary">
+            <div class="spinner" style="width:25px;height:25px;border-width:3px"></div>
+        </div>
+
+        <!-- Booking Form -->
+        <form id="bookingForm" onsubmit="handleBooking(event)">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">📅 Travel Date</label>
+                    <input type="date" class="form-control" id="travelDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">👥 Number of Persons</label>
+                    <input type="number" class="form-control" id="persons" value="2" min="1" max="20" required onchange="updateTotal()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📝 Special Requests (Optional)</label>
+                <textarea class="form-control" id="specialRequests" rows="3" placeholder="Any dietary requirements, special arrangements..."></textarea>
+            </div>
+
+            <!-- Total Price -->
+            <div class="total-section">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:5px" id="priceBreakdown">₹0 × 2 persons</p>
+                        <p style="font-weight:700;font-size:1.1rem;color:#555">Total Amount</p>
+                    </div>
+                    <div class="total-price" id="totalDisplay">₹0</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-secondary btn-lg" id="bookBtn" style="width:100%;justify-content:center">
+                <i class="fas fa-check-circle"></i> Confirm Booking
+            </button>
+        </form>
+    </div>
+</div>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center;margin-top:40px">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    if (!isLoggedIn()) window.location.href = 'login.html';
+
+    const params = new URLSearchParams(window.location.search);
+    const packageId = params.get('packageId');
+    const preDate = params.get('date');
+    const prePersons = params.get('persons');
+
+    let packageData = null;
+
+    if (!packageId) window.location.href = 'packages.html';
+
+    async function loadPackage() {
+        if (preDate) document.getElementById('travelDate').value = preDate;
+        else document.getElementById('travelDate').min = new Date().toISOString().split('T')[0];
+        if (prePersons) document.getElementById('persons').value = prePersons;
+
+        try {
+            packageData = await fetch(`${API_BASE}/packages/${packageId}`).then(r => r.json());
+        } catch(e) {
+            const demos = {
+                1: {id:1, name:'Goa Beach Explorer', durationDays:4, price:15000, destination:{name:'Goa'}},
+                2: {id:2, name:'Manali Snow Adventure', durationDays:5, price:20000, destination:{name:'Manali'}},
+                3: {id:3, name:'Jaipur Royal Heritage', durationDays:3, price:12000, destination:{name:'Jaipur'}},
+                4: {id:4, name:'Kerala Backwater Bliss', durationDays:6, price:25000, destination:{name:'Kerala'}},
+            };
+            packageData = demos[packageId] || demos[1];
+        }
+
+        document.getElementById('pkgSummary').innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <h3 style="font-size:1.4rem;font-weight:800;margin-bottom:5px">✈️ ${packageData.name}</h3>
+                    <p style="opacity:0.85">📍 ${packageData.destination?.name || 'India'} &nbsp;•&nbsp; 📅 ${packageData.durationDays} Days</p>
+                </div>
+                <div style="text-align:right">
+                    <p style="opacity:0.85;font-size:0.9rem">Price per Person</p>
+                    <p style="font-size:1.8rem;font-weight:800">${formatCurrency(packageData.price)}</p>
+                </div>
+            </div>
+        `;
+        updateTotal();
+    }
+
+    function updateTotal() {
+        if (!packageData) return;
+        const persons = parseInt(document.getElementById('persons').value) || 1;
+        const total = packageData.price * persons;
+        document.getElementById('totalDisplay').textContent = formatCurrency(total);
+        document.getElementById('priceBreakdown').textContent = `${formatCurrency(packageData.price)} × ${persons} person${persons > 1 ? 's' : ''}`;
+    }
+
+    async function handleBooking(e) {
+        e.preventDefault();
+        const btn = document.getElementById('bookBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
+        btn.disabled = true;
+
+        try {
+            const booking = await apiPost('/bookings', {
+                packageId: parseInt(packageId),
+                travelDate: document.getElementById('travelDate').value,
+                persons: parseInt(document.getElementById('persons').value),
+                specialRequests: document.getElementById('specialRequests').value
+            }, true);
+
+            showAlert('alertContainer', '✅ Booking created! Redirecting to payment...', 'success');
+            setTimeout(() => {
+                window.location.href = `payment.html?bookingId=${booking.id}`;
+            }, 1500);
+
+        } catch(err) {
+            showAlert('alertContainer', '❌ ' + err.message, 'error');
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            btn.disabled = false;
+        }
+    }
+
+    loadPackage();
+</script>
+</body>
+</html>

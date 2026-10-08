@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .payment-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 35px; }
+        .payment-method { border: 2px solid var(--gray-light); border-radius: var(--radius); padding: 18px; margin-bottom: 15px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 15px; }
+        .payment-method:hover { border-color: var(--primary); background: #f0f4ff; }
+        .payment-method.selected { border-color: var(--primary); background: #f0f4ff; }
+        .payment-method input[type="radio"] { width: 18px; height: 18px; accent-color: var(--primary); }
+        .method-icon { font-size: 1.8rem; }
+        .method-label { font-weight: 600; color: var(--dark); }
+        .method-desc { font-size: 0.8rem; color: var(--gray); }
+        .secure-badge { background: #d4edda; color: #155724; padding: 10px 20px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="my-bookings.html">← My Bookings</a></li>
+    </ul>
+    <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+</nav>
+
+<div class="payment-page">
+    <div id="alertContainer"></div>
+
+    <div class="payment-card">
+        <h1 style="font-size:2rem;font-weight:800;color:var(--dark);margin-bottom:5px">💳 Secure Payment</h1>
+        <p style="color:var(--gray);margin-bottom:25px">Complete your payment to confirm the booking</p>
+
+        <!-- Booking Summary -->
+        <div id="bookingSummary" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border-radius:var(--radius);padding:25px;margin-bottom:25px">
+            <div class="spinner" style="width:25px;height:25px;border-width:3px"></div>
+        </div>
+
+        <!-- Payment Methods -->
+        <h3 style="font-weight:700;color:var(--dark);margin-bottom:15px">Choose Payment Method</h3>
+
+        <label class="payment-method" id="upiLabel">
+            <input type="radio" name="paymentMethod" value="UPI" checked onchange="selectMethod(this)">
+            <span class="method-icon">📱</span>
+            <div>
+                <div class="method-label">UPI Payment</div>
+                <div class="method-desc">Google Pay, PhonePe, Paytm, BHIM</div>
+            </div>
+        </label>
+
+        <label class="payment-method" id="cardLabel">
+            <input type="radio" name="paymentMethod" value="CARD" onchange="selectMethod(this)">
+            <span class="method-icon">💳</span>
+            <div>
+                <div class="method-label">Credit / Debit Card</div>
+                <div class="method-desc">Visa, Mastercard, RuPay</div>
+            </div>
+        </label>
+
+        <label class="payment-method" id="netLabel">
+            <input type="radio" name="paymentMethod" value="NET_BANKING" onchange="selectMethod(this)">
+            <span class="method-icon">🏦</span>
+            <div>
+                <div class="method-label">Net Banking</div>
+                <div class="method-desc">SBI, HDFC, ICICI, Axis and more</div>
+            </div>
+        </label>
+
+        <div style="text-align:center;margin:20px 0">
+            <span class="secure-badge">🔒 100% Secure & Encrypted Payment</span>
+        </div>
+
+        <button class="btn btn-success btn-lg" id="payBtn" style="width:100%;justify-content:center;font-size:1.1rem" onclick="processPayment()">
+            <i class="fas fa-lock"></i> Pay Now <span id="payAmount"></span>
+        </button>
+
+        <p style="font-size:0.8rem;color:var(--gray);text-align:center;margin-top:15px">
+            This is a simulated payment for demonstration purposes
+        </p>
+    </div>
+</div>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center;margin-top:40px">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    if (!isLoggedIn()) window.location.href = 'login.html';
+
+    const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('bookingId');
+    let bookingData = null;
+
+    if (!bookingId) window.location.href = 'my-bookings.html';
+
+    // Select the label as active
+    document.getElementById('upiLabel').classList.add('selected');
+
+    function selectMethod(radio) {
+        document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+        radio.closest('.payment-method').classList.add('selected');
+    }
+
+    async function loadBooking() {
+        try {
+            bookingData = await apiGet(`/bookings/${bookingId}`);
+        } catch(e) {
+            bookingData = { id: bookingId, totalPrice: 30000, persons: 2, travelDate: '2026-12-01', travelPackage: { name: 'Demo Package', destination: { name: 'Goa' } } };
+        }
+
+        const pkg = bookingData.travelPackage || {};
+        document.getElementById('bookingSummary').innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px">
+                <div>
+                    <p style="opacity:0.8;font-size:0.85rem;margin-bottom:4px">Booking #${bookingData.id}</p>
+                    <h3 style="font-size:1.3rem;font-weight:800;margin-bottom:4px">✈️ ${pkg.name || 'Package'}</h3>
+                    <p style="opacity:0.85;font-size:0.9rem">📍 ${pkg.destination?.name || 'India'} &nbsp;•&nbsp; 📅 ${formatDate(bookingData.travelDate)} &nbsp;•&nbsp; 👥 ${bookingData.persons} Person(s)</p>
+                </div>
+                <div style="text-align:right">
+                    <p style="opacity:0.8;font-size:0.85rem">Total Amount</p>
+                    <p style="font-size:2rem;font-weight:800">${formatCurrency(bookingData.totalPrice)}</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('payAmount').textContent = formatCurrency(bookingData.totalPrice);
+    }
+
+    async function processPayment() {
+        const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+        const btn = document.getElementById('payBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Payment...';
+        btn.disabled = true;
+
+        try {
+            const payment = await apiPost('/payments', {
+                bookingId: parseInt(bookingId),
+                paymentMethod: method
+            }, true);
+
+            window.location.href = `booking-confirmation.html?bookingId=${bookingId}&txn=${payment.transactionId}`;
+
+        } catch(err) {
+            showAlert('alertContainer', '❌ Payment failed: ' + err.message, 'error');
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay Now';
+            btn.disabled = false;
+        }
+    }
+
+    loadBooking();
+</script>
+</body>
+</html>

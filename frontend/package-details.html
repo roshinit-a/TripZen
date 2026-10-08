@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Details – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .detail-hero { width: 100%; height: 420px; object-fit: cover; border-radius: var(--radius); margin-bottom: 30px; }
+        .detail-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1100px; margin: 0 auto; padding: 40px 5%; }
+        .inclusion-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gray-light); font-size: 0.95rem; }
+        .inclusion-item:last-child { border: none; }
+        .booking-sidebar { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; position: sticky; top: 80px; }
+        .meta-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--gray-light); }
+        .meta-row:last-child { border: none; }
+        .meta-label { color: var(--gray); font-size: 0.9rem; }
+        .meta-value { font-weight: 600; color: var(--dark); }
+        @media(max-width:768px) { .detail-layout { grid-template-columns: 1fr; } .detail-hero { height: 260px; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="destinations.html">Destinations</a></li>
+        <li><a href="hotels.html">Hotels</a></li>
+        <li><a href="packages.html" class="active">Packages</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+        <a href="login.html" id="navLogin"><button class="btn btn-outline">Login</button></a>
+        <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+    </div>
+</nav>
+
+<div id="packageContent">
+    <div class="spinner" style="margin-top:80px"></div>
+</div>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const packageId = urlParams.get('id');
+
+    if (!packageId) window.location.href = 'packages.html';
+
+    let pkg = null;
+
+    async function loadPackage() {
+        try {
+            pkg = await fetch(`${API_BASE}/packages/${packageId}`).then(r => r.json());
+        } catch(e) {
+            // Fallback demo data
+            const demos = {
+                1: {id:1, name:'Goa Beach Explorer', durationDays:4, price:15000, description:'Enjoy 4 days of sun, sand and seafood in beautiful Goa. Visit beautiful beaches like Baga, Calangute and Anjuna. Experience the vibrant nightlife and savour the delicious Goan cuisine. This package includes hotel stay in a 3-star property, daily breakfast and guided sightseeing tours.', imageUrl:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800', inclusions:'Hotel Stay (3 Star),Daily Breakfast,Airport Transfer,Beach Tour,Sightseeing Guide', maxPersons:10, destination:{name:'Goa', country:'India'}},
+                2: {id:2, name:'Manali Snow Adventure', durationDays:5, price:20000, description:'5 days of adventure in the snow-clad mountains of Manali. Experience skiing, snowboarding and river rafting. Visit Rohtang Pass, Solang Valley and Hadimba Temple. This package includes hotel stay, all meals and adventure activities with professional guides.', imageUrl:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', inclusions:'Hotel Stay (4 Star),All Meals,Skiing,River Rafting,Rohtang Pass Visit', maxPersons:8, destination:{name:'Manali', country:'India'}},
+            };
+            pkg = demos[packageId] || demos[1];
+        }
+        renderPackage(pkg);
+    }
+
+    function renderPackage(p) {
+        const inclusions = p.inclusions ? p.inclusions.split(',') : [];
+        document.getElementById('packageContent').innerHTML = `
+            <div style="padding:20px 5%;max-width:1200px;margin:0 auto">
+                <a href="packages.html" style="color:var(--primary);font-weight:500;display:inline-block;margin-bottom:15px">← Back to Packages</a>
+            </div>
+            <div class="detail-layout">
+                <div>
+                    <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800'}" 
+                         class="detail-hero" alt="${p.name}"
+                         onerror="this.src='https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800'">
+                    
+                    <h1 style="font-size:2rem;font-weight:800;color:var(--dark);margin-bottom:8px">${p.name}</h1>
+                    <p style="color:var(--gray);margin-bottom:20px">
+                        📍 ${p.destination?.name || 'India'}, ${p.destination?.country || 'India'} &nbsp;|&nbsp; 
+                        📅 ${p.durationDays} Days &nbsp;|&nbsp;
+                        👥 Max ${p.maxPersons || 10} Persons
+                    </p>
+                    
+                    <div style="background:white;border-radius:var(--radius);padding:25px;box-shadow:var(--shadow);margin-bottom:25px">
+                        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:15px">About This Package</h2>
+                        <p style="color:#555;line-height:1.8">${p.description}</p>
+                    </div>
+                    
+                    ${inclusions.length ? `
+                    <div style="background:white;border-radius:var(--radius);padding:25px;box-shadow:var(--shadow)">
+                        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:15px">What's Included ✅</h2>
+                        ${inclusions.map(inc => `
+                            <div class="inclusion-item">
+                                <span style="color:var(--success);font-size:1.2rem">✅</span>
+                                <span>${inc.trim()}</span>
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
+                </div>
+
+                <!-- BOOKING SIDEBAR -->
+                <div>
+                    <div class="booking-sidebar">
+                        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:20px">Book This Package</h2>
+                        
+                        <div class="meta-row">
+                            <span class="meta-label">Price per Person</span>
+                            <span class="meta-value" style="color:var(--primary)">${formatCurrency(p.price)}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Duration</span>
+                            <span class="meta-value">${p.durationDays} Days</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Destination</span>
+                            <span class="meta-value">${p.destination?.name || 'India'}</span>
+                        </div>
+
+                        <div class="form-group" style="margin-top:20px">
+                            <label class="form-label">📅 Travel Date</label>
+                            <input type="date" class="form-control" id="travelDate" min="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">👥 Number of Persons</label>
+                            <input type="number" class="form-control" id="persons" value="2" min="1" max="${p.maxPersons || 10}" onchange="updateTotal()">
+                        </div>
+                        
+                        <div style="background:#f0f4ff;border-radius:var(--radius);padding:15px;margin-bottom:20px">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <span style="font-weight:600;color:#555">Total Price:</span>
+                                <span class="price" id="totalPrice">${formatCurrency(p.price * 2)}</span>
+                            </div>
+                            <p style="font-size:0.8rem;color:var(--gray);margin-top:5px">${formatCurrency(p.price)} × <span id="personsDisplay">2</span> persons</p>
+                        </div>
+                        
+                        <button class="btn btn-secondary btn-lg" style="width:100%;justify-content:center" onclick="proceedToBook()">
+                            🚀 Book Now
+                        </button>
+                        
+                        <p style="font-size:0.8rem;color:var(--gray);text-align:center;margin-top:10px">
+                            Free cancellation before 48 hours
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function updateTotal() {
+        if (!pkg) return;
+        const persons = parseInt(document.getElementById('persons')?.value) || 1;
+        const total = pkg.price * persons;
+        const el = document.getElementById('totalPrice');
+        const disp = document.getElementById('personsDisplay');
+        if (el) el.textContent = formatCurrency(total);
+        if (disp) disp.textContent = persons;
+    }
+
+    function proceedToBook() {
+        if (!isLoggedIn()) {
+            window.location.href = `login.html?redirect=package-details.html?id=${packageId}`;
+            return;
+        }
+        const date = document.getElementById('travelDate')?.value;
+        const persons = document.getElementById('persons')?.value;
+        if (!date) { alert('Please select a travel date!'); return; }
+        window.location.href = `booking.html?packageId=${packageId}&date=${date}&persons=${persons}`;
+    }
+
+    loadPackage();
+</script>
+</body>
+</html>

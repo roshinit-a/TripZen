@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Payments – TripZen Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { display: flex; min-height: 100vh; background: #f0f4ff; }
+        .sidebar { width: 260px; background: var(--dark); color: white; padding: 30px 0; flex-shrink: 0; min-height: 100vh; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .sidebar .brand { padding: 0 25px 30px; font-size: 1.6rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .sidebar .brand span { color: var(--secondary); }
+        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 13px 25px; color: #ccc; font-weight: 500; transition: var(--transition); border-left: 3px solid transparent; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--secondary); }
+        .sidebar nav a i { width: 20px; text-align: center; }
+        .sidebar .logout { margin-top: auto; padding: 20px 25px 0; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .data-table { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .data-table .table-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-light); }
+        .data-table table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #f8f9ff; padding: 13px 20px; text-align: left; font-size: 0.85rem; font-weight: 700; color: var(--gray); border-bottom: 2px solid var(--gray-light); }
+        .data-table td { padding: 12px 20px; font-size: 0.88rem; border-bottom: 1px solid var(--gray-light); }
+        .data-table tr:hover td { background: #fafbff; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="brand">Trip<span>Zen</span> ✈️</div>
+    <nav>
+        <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="manage-users.html"><i class="fas fa-users"></i> Users</a>
+        <a href="manage-destinations.html"><i class="fas fa-map-marker-alt"></i> Destinations</a>
+        <a href="manage-hotels.html"><i class="fas fa-hotel"></i> Hotels</a>
+        <a href="manage-packages.html"><i class="fas fa-suitcase"></i> Packages</a>
+        <a href="manage-bookings.html"><i class="fas fa-calendar-check"></i> Bookings</a>
+        <a href="manage-payments.html" class="active"><i class="fas fa-credit-card"></i> Payments</a>
+    </nav>
+    <div class="logout">
+        <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+
+<div class="main">
+    <h1 style="font-size:1.8rem;font-weight:800;color:var(--dark);margin-bottom:25px">💳 Payment Records</h1>
+    <div class="data-table">
+        <div class="table-header">
+            <h3>All Payments</h3>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search TXN ID..." style="max-width:220px" oninput="filterTable()">
+        </div>
+        <div id="tableBody"><div class="spinner"></div></div>
+    </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script>
+    if (!isLoggedIn() || !isAdmin()) window.location.href = '../login.html';
+    let payments = [];
+    async function loadPayments() {
+        // Payments endpoint not listed in spec but we can show demo
+        payments = [
+            {id:501, booking:{id:101, travelPackage:{name:'Goa Explorer'}}, amount:30000, paymentMethod:'UPI', paymentStatus:'SUCCESS', transactionId:'TXN-A1B2C3D4', paidAt:'2024-11-01'},
+            {id:502, booking:{id:102, travelPackage:{name:'Manali Adventure'}}, amount:60000, paymentMethod:'CARD', paymentStatus:'SUCCESS', transactionId:'TXN-E5F6G7H8', paidAt:'2024-11-05'},
+            {id:503, booking:{id:103, travelPackage:{name:'Jaipur Royal'}}, amount:24000, paymentMethod:'NET_BANKING', paymentStatus:'SUCCESS', transactionId:'TXN-I9J0K1L2', paidAt:'2024-11-10'},
+        ];
+        renderTable(payments);
+    }
+    function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = `
+            <table>
+                <thead><tr><th>#ID</th><th>Booking</th><th>Package</th><th>Amount</th><th>Method</th><th>Transaction ID</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>${data.map(p => `
+                    <tr>
+                        <td><strong>#${p.id}</strong></td>
+                        <td>#${p.booking?.id}</td>
+                        <td>${p.booking?.travelPackage?.name || '—'}</td>
+                        <td><strong>${formatCurrency(p.amount)}</strong></td>
+                        <td>${p.paymentMethod}</td>
+                        <td><code style="background:#f0f4ff;padding:3px 8px;border-radius:6px;font-size:0.8rem">${p.transactionId}</code></td>
+                        <td><span class="badge badge-success">${p.paymentStatus}</span></td>
+                        <td>${formatDate(p.paidAt)}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>`;
+    }
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderTable(payments.filter(p => (p.transactionId || '').toLowerCase().includes(q) || (p.booking?.travelPackage?.name || '').toLowerCase().includes(q)));
+    }
+    loadPayments();
+</script>
+</body>
+</html>

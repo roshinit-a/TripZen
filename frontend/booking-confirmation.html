@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed! – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .confirm-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 50px; text-align: center; }
+        .detail-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--gray-light); font-size: 0.95rem; }
+        .detail-row:last-child { border: none; }
+        .detail-label { color: var(--gray); }
+        .detail-value { font-weight: 600; color: var(--dark); }
+        .confetti { font-size: 3rem; animation: bounce 1s ease infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+    </style>
+</head>
+<body style="background:#f0f4ff">
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+</nav>
+
+<div class="confirmation-page">
+    <div class="confetti">🎉</div>
+
+    <div class="confirm-card">
+        <div class="success-icon">✅</div>
+        <h1 style="font-size:2.2rem;font-weight:800;color:var(--dark);margin-bottom:8px">Booking Confirmed!</h1>
+        <p style="color:var(--gray);font-size:1rem;margin-bottom:30px">Your trip has been booked successfully. Have a wonderful journey!</p>
+
+        <div id="confirmDetails" style="text-align:left;margin-bottom:30px">
+            <div class="spinner"></div>
+        </div>
+
+        <div style="background:#d4edda;border-radius:var(--radius);padding:15px;margin-bottom:25px;color:#155724">
+            <strong>✅ Payment Successful!</strong><br>
+            <span style="font-size:0.9rem">Transaction ID: <strong id="txnId">—</strong></span>
+        </div>
+
+        <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap">
+            <a href="my-bookings.html">
+                <button class="btn btn-primary btn-lg">📋 View My Bookings</button>
+            </a>
+            <a href="packages.html">
+                <button class="btn btn-outline btn-lg">✈️ Book Another Trip</button>
+            </a>
+            <a href="index.html">
+                <button class="btn btn-outline" style="padding:10px 20px">🏠 Home</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center;margin-top:40px">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    if (!isLoggedIn()) window.location.href = 'login.html';
+
+    const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('bookingId');
+    const txn = params.get('txn');
+
+    if (txn) document.getElementById('txnId').textContent = txn;
+
+    async function loadConfirmation() {
+        try {
+            const booking = await apiGet(`/bookings/${bookingId}`);
+            const pkg = booking.travelPackage || {};
+            document.getElementById('confirmDetails').innerHTML = `
+                <div class="detail-row"><span class="detail-label">Booking ID</span><span class="detail-value">#${booking.id}</span></div>
+                <div class="detail-row"><span class="detail-label">Package</span><span class="detail-value">${pkg.name || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Destination</span><span class="detail-value">${pkg.destination?.name || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Travel Date</span><span class="detail-value">${formatDate(booking.travelDate)}</span></div>
+                <div class="detail-row"><span class="detail-label">Persons</span><span class="detail-value">${booking.persons}</span></div>
+                <div class="detail-row"><span class="detail-label">Total Amount</span><span class="detail-value" style="color:var(--primary);font-size:1.2rem">${formatCurrency(booking.totalPrice)}</span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${getStatusBadge(booking.status)}</span></div>
+            `;
+        } catch(e) {
+            document.getElementById('confirmDetails').innerHTML = `
+                <div class="detail-row"><span class="detail-label">Booking ID</span><span class="detail-value">#${bookingId}</span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${getStatusBadge('CONFIRMED')}</span></div>
+            `;
+        }
+    }
+
+    loadConfirmation();
+</script>
+</body>
+</html>

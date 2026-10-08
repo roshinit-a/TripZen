@@ -1,0 +1,13 @@
+package com.tripzen.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentRequest {
+    private Long bookingId;
+    private String paymentMethod; // UPI, CARD, NET_BANKING
+}

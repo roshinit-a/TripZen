@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings – TripZen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .booking-item { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .booking-item:hover { box-shadow: var(--shadow-hover); }
+        .booking-info h3 { font-size: 1.2rem; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+        .booking-meta { display: flex; gap: 15px; color: var(--gray); font-size: 0.85rem; flex-wrap: wrap; }
+        .booking-actions { display: flex; gap: 10px; align-items: center; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="logo">Trip<span>Zen</span> ✈️</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="my-bookings.html" class="active">My Bookings</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+        <a href="login.html" id="navLogin"><button class="btn btn-outline">Login</button></a>
+        <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1>📋 My Bookings</h1>
+    <p>View and manage all your travel bookings</p>
+</div>
+
+<section class="section" style="max-width:1000px;margin:0 auto">
+    <div id="alertContainer"></div>
+    <div id="bookingsContainer">
+        <div class="spinner"></div>
+    </div>
+</section>
+
+<footer style="background:var(--dark);color:#ccc;padding:25px 5%;text-align:center">
+    <p>&copy; 2024 TripZen. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    if (!isLoggedIn()) window.location.href = 'login.html';
+
+    async function loadBookings() {
+        try {
+            const bookings = await apiGet('/bookings/my');
+            renderBookings(bookings);
+        } catch(e) {
+            document.getElementById('bookingsContainer').innerHTML = `
+                <div style="text-align:center;padding:60px;color:var(--gray)">
+                    <div style="font-size:4rem;margin-bottom:15px">📭</div>
+                    <h3>No bookings found</h3>
+                    <p style="margin-bottom:20px">You haven't made any bookings yet.</p>
+                    <a href="packages.html"><button class="btn btn-primary btn-lg">Explore Packages</button></a>
+                </div>
+            `;
+        }
+    }
+
+    function renderBookings(bookings) {
+        if (!bookings || !bookings.length) {
+            document.getElementById('bookingsContainer').innerHTML = `
+                <div style="text-align:center;padding:60px;color:var(--gray)">
+                    <div style="font-size:4rem;margin-bottom:15px">📭</div>
+                    <h3>No bookings yet!</h3>
+                    <p style="margin-bottom:20px">Start exploring amazing travel packages</p>
+                    <a href="packages.html"><button class="btn btn-primary btn-lg">✈️ Explore Packages</button></a>
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('bookingsContainer').innerHTML = `
+            <p style="color:var(--gray);margin-bottom:20px">${bookings.length} booking(s) found</p>
+            ${bookings.map(b => {
+                const pkg = b.travelPackage || {};
+                const isPending = b.status === 'PENDING';
+                const isConfirmed = b.status === 'CONFIRMED';
+                return `
+                <div class="booking-item">
+                    <div class="booking-info">
+                        <h3>✈️ ${pkg.name || 'Package'}</h3>
+                        <div class="booking-meta">
+                            <span>📍 ${pkg.destination?.name || '—'}</span>
+                            <span>📅 ${formatDate(b.travelDate)}</span>
+                            <span>👥 ${b.persons} Person(s)</span>
+                            <span>🆔 Booking #${b.id}</span>
+                        </div>
+                    </div>
+                    <div class="booking-actions">
+                        <div style="text-align:right">
+                            <div style="font-size:1.3rem;font-weight:800;color:var(--primary)">${formatCurrency(b.totalPrice)}</div>
+                            <div style="margin-top:5px">${getStatusBadge(b.status)}</div>
+                        </div>
+                        ${isPending ? `
+                            <button class="btn btn-success" style="padding:8px 16px;font-size:0.85rem" onclick="payNow(${b.id})">
+                                💳 Pay Now
+                            </button>
+                            <button class="btn btn-danger" style="padding:8px 16px;font-size:0.85rem" onclick="cancelBooking(${b.id})">
+                                ✕ Cancel
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `}).join('')}
+        `;
+    }
+
+    function payNow(bookingId) {
+        window.location.href = `payment.html?bookingId=${bookingId}`;
+    }
+
+    async function cancelBooking(bookingId) {
+        if (!confirm('Are you sure you want to cancel this booking?')) return;
+        try {
+            await apiPut(`/bookings/${bookingId}/cancel`);
+            showAlert('alertContainer', '✅ Booking cancelled successfully.', 'success');
+            loadBookings();
+        } catch(err) {
+            showAlert('alertContainer', '❌ ' + err.message, 'error');
+        }
+    }
+
+    loadBookings();
+</script>
+</body>
+</html>

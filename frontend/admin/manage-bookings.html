@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Bookings – TripZen Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { display: flex; min-height: 100vh; background: #f0f4ff; }
+        .sidebar { width: 260px; background: var(--dark); color: white; padding: 30px 0; flex-shrink: 0; min-height: 100vh; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .sidebar .brand { padding: 0 25px 30px; font-size: 1.6rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .sidebar .brand span { color: var(--secondary); }
+        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 13px 25px; color: #ccc; font-weight: 500; transition: var(--transition); border-left: 3px solid transparent; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: white; border-left-color: var(--secondary); }
+        .sidebar nav a i { width: 20px; text-align: center; }
+        .sidebar .logout { margin-top: auto; padding: 20px 25px 0; }
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .data-table { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .data-table .table-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-light); flex-wrap: wrap; gap: 10px; }
+        .data-table table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #f8f9ff; padding: 13px 20px; text-align: left; font-size: 0.85rem; font-weight: 700; color: var(--gray); border-bottom: 2px solid var(--gray-light); }
+        .data-table td { padding: 12px 20px; font-size: 0.88rem; border-bottom: 1px solid var(--gray-light); }
+        .data-table tr:hover td { background: #fafbff; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="brand">Trip<span>Zen</span> ✈️</div>
+    <nav>
+        <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="manage-users.html"><i class="fas fa-users"></i> Users</a>
+        <a href="manage-destinations.html"><i class="fas fa-map-marker-alt"></i> Destinations</a>
+        <a href="manage-hotels.html"><i class="fas fa-hotel"></i> Hotels</a>
+        <a href="manage-packages.html"><i class="fas fa-suitcase"></i> Packages</a>
+        <a href="manage-bookings.html" class="active"><i class="fas fa-calendar-check"></i> Bookings</a>
+        <a href="manage-payments.html"><i class="fas fa-credit-card"></i> Payments</a>
+    </nav>
+    <div class="logout">
+        <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+
+<div class="main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px">
+        <h1 style="font-size:1.8rem;font-weight:800;color:var(--dark)">📋 Manage Bookings</h1>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="data-table">
+        <div class="table-header">
+            <h3>All Bookings</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <select class="form-control" id="statusFilter" style="max-width:160px" onchange="filterTable()">
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="CONFIRMED">Confirmed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search user/package..." style="max-width:220px" oninput="filterTable()">
+            </div>
+        </div>
+        <div id="tableBody">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script>
+    if (!isLoggedIn() || !isAdmin()) window.location.href = '../login.html';
+
+    let bookings = [];
+
+    async function loadBookings() {
+        try {
+            bookings = await apiGet('/bookings');
+            renderTable(bookings);
+        } catch(e) {
+            bookings = [
+                {id:101, user:{name:'Deepak'}, travelPackage:{name:'Goa Explorer'}, travelDate:'2026-12-01', persons:2, totalPrice:30000, status:'CONFIRMED'},
+                {id:102, user:{name:'Rahul'}, travelPackage:{name:'Manali Adventure'}, travelDate:'2026-11-15', persons:3, totalPrice:60000, status:'PENDING'},
+                {id:103, user:{name:'Amit'}, travelPackage:{name:'Jaipur Royal'}, travelDate:'2026-12-20', persons:2, totalPrice:24000, status:'CONFIRMED'},
+            ];
+            renderTable(bookings);
+        }
+    }
+
+    function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = `
+            <table>
+                <thead>
+                    <tr><th>#ID</th><th>User</th><th>Package</th><th>Travel Date</th><th>Persons</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    ${data.map(b => `
+                        <tr>
+                            <td><strong>#${b.id}</strong></td>
+                            <td>${b.user?.name || '—'}</td>
+                            <td>${b.travelPackage?.name || '—'}</td>
+                            <td>${formatDate(b.travelDate)}</td>
+                            <td>${b.persons}</td>
+                            <td><strong>${formatCurrency(b.totalPrice)}</strong></td>
+                            <td>${getStatusBadge(b.status)}</td>
+                            <td>
+                                <select onchange="updateStatus(${b.id}, this.value)" style="border:1px solid #ddd;border-radius:8px;padding:4px 8px;font-size:0.8rem;font-family:Poppins,sans-serif;cursor:pointer">
+                                    <option ${b.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
+                                    <option ${b.status === 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                                    <option ${b.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+        renderTable(bookings.filter(b =>
+            (!status || b.status === status) &&
+            ((b.user?.name || '').toLowerCase().includes(q) || (b.travelPackage?.name || '').toLowerCase().includes(q))
+        ));
+    }
+
+    async function updateStatus(id, status) {
+        try {
+            await apiPut(`/bookings/${id}/status?status=${status}`);
+            showAlert('alertContainer', `✅ Booking #${id} status updated to ${status}`, 'success');
+            loadBookings();
+        } catch(e) {
+            showAlert('alertContainer', '❌ Failed to update status', 'error');
+        }
+    }
+
+    loadBookings();
+</script>
+</body>
+</html>

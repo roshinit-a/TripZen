@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripZen – Explore The World</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .hero { padding: 120px 5% 100px; }
+        .hero h1 { font-size: 4rem; }
+        .hero-emoji { font-size: 4rem; display: block; margin-bottom: 15px; }
+
+        .why-us {
+            background: white;
+            padding: 80px 5%;
+        }
+        .why-card {
+            text-align: center;
+            padding: 35px 25px;
+            border-radius: var(--radius);
+            background: #f0f4ff;
+            transition: var(--transition);
+        }
+        .why-card:hover { background: var(--primary); color: white; transform: translateY(-5px); }
+        .why-card:hover p { color: rgba(255,255,255,0.85); }
+        .why-icon { font-size: 2.5rem; margin-bottom: 15px; }
+        .why-card h3 { font-weight: 700; margin-bottom: 10px; }
+        .why-card p { color: var(--gray); font-size: 0.9rem; }
+
+        .dest-card { position: relative; border-radius: var(--radius); overflow: hidden; cursor: pointer; }
+        .dest-card img { width: 100%; height: 260px; object-fit: cover; transition: var(--transition); }
+        .dest-card:hover img { transform: scale(1.05); }
+        .dest-card .dest-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white; padding: 25px 20px 20px;
+        }
+        .dest-card .dest-info h3 { font-size: 1.3rem; font-weight: 700; }
+        .dest-card .dest-info p { font-size: 0.85rem; opacity: 0.85; }
+
+        .stats-bar {
+            background: var(--primary);
+            color: white;
+            padding: 30px 5%;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .stat-item h2 { font-size: 2.5rem; font-weight: 800; }
+        .stat-item p { opacity: 0.85; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar">
+    <div class="logo">Trip<span>Zen</span> ✈️</div>
+    <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="destinations.html">Destinations</a></li>
+        <li><a href="hotels.html">Hotels</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="my-bookings.html">My Bookings</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+        <a href="login.html" id="navLogin"><button class="btn btn-outline">Login</button></a>
+        <a href="register.html"><button class="btn btn-primary">Register</button></a>
+        <div id="navUser" style="display:flex;gap:10px;align-items:center"></div>
+    </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+    <div style="position:relative;z-index:1">
+        <span class="hero-emoji">🌍</span>
+        <h1>Explore The World <br>With <span style="color:#ff6b35">TripZen</span></h1>
+        <p>Plan your perfect journey — best packages, top destinations, easy booking</p>
+
+        <div class="search-box">
+            <div class="form-group">
+                <label class="form-label">🔍 Where do you want to go?</label>
+                <input type="text" class="form-control" id="searchDest" placeholder="E.g. Goa, Manali, Jaipur...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">📅 Travel Date</label>
+                <input type="date" class="form-control" id="searchDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">👥 Persons</label>
+                <input type="number" class="form-control" id="searchPersons" placeholder="2" min="1" max="20">
+            </div>
+            <button class="btn btn-secondary btn-lg" onclick="searchPackages()">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ========== STATS BAR ========== -->
+<div class="stats-bar">
+    <div class="stat-item"><h2>500+</h2><p>Happy Travelers</p></div>
+    <div class="stat-item"><h2>50+</h2><p>Destinations</p></div>
+    <div class="stat-item"><h2>100+</h2><p>Travel Packages</p></div>
+    <div class="stat-item"><h2>24/7</h2><p>Customer Support</p></div>
+</div>
+
+<!-- ========== DESTINATIONS ========== -->
+<section class="section">
+    <div class="section-title">
+        <h2>Popular <span class="highlight">Destinations</span></h2>
+        <p>Discover the most loved travel spots across India and beyond</p>
+    </div>
+    <div class="grid-3" id="destinationsGrid">
+        <div class="spinner"></div>
+    </div>
+    <div style="text-align:center;margin-top:35px">
+        <a href="destinations.html"><button class="btn btn-outline btn-lg">View All Destinations →</button></a>
+    </div>
+</section>
+
+<!-- ========== PACKAGES ========== -->
+<section class="section" style="background:white">
+    <div class="section-title">
+        <h2>Popular <span class="highlight">Travel Packages</span></h2>
+        <p>Handpicked packages for every type of traveler</p>
+    </div>
+    <div class="grid-3" id="packagesGrid">
+        <div class="spinner"></div>
+    </div>
+    <div style="text-align:center;margin-top:35px">
+        <a href="packages.html"><button class="btn btn-primary btn-lg">Explore All Packages →</button></a>
+    </div>
+</section>
+
+<!-- ========== WHY CHOOSE US ========== -->
+<section class="why-us">
+    <div class="section-title">
+        <h2>Why Choose <span class="highlight">TripZen?</span></h2>
+        <p>We make travel planning simple, safe and memorable</p>
+    </div>
+    <div class="grid-4">
+        <div class="why-card">
+            <div class="why-icon">✈️</div>
+            <h3>Easy Booking</h3>
+            <p>Book your dream trip in just a few clicks with our simple interface</p>
+        </div>
+        <div class="why-card">
+            <div class="why-icon">🔒</div>
+            <h3>Secure Payment</h3>
+            <p>Your payments are 100% secure with encrypted transactions</p>
+        </div>
+        <div class="why-card">
+            <div class="why-icon">🏆</div>
+            <h3>Best Packages</h3>
+            <p>Curated packages with the best value for your money</p>
+        </div>
+        <div class="why-card">
+            <div class="why-icon">📞</div>
+            <h3>24/7 Support</h3>
+            <p>Our travel experts are always here to help you anytime</p>
+        </div>
+    </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <div class="logo">Trip<span>Zen</span> ✈️</div>
+            <p>Your trusted travel companion for exploring the world. Discover, book and experience amazing journeys with TripZen.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="destinations.html">Destinations</a></li>
+                <li><a href="packages.html">Packages</a></li>
+                <li><a href="hotels.html">Hotels</a></li>
+            </ul>
+        </div>
+        <div class="footer-links">
+            <h4>Account</h4>
+            <ul>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="my-bookings.html">My Bookings</a></li>
+                <li><a href="profile.html">Profile</a></li>
+            </ul>
+        </div>
+        <div class="footer-links">
+            <h4>Contact</h4>
+            <ul>
+                <li><a href="#">📧 info@tripzen.com</a></li>
+                <li><a href="#">📞 +91 9876543210</a></li>
+                <li><a href="#">📍 Mumbai, India</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2024 TripZen. All rights reserved. Made with ❤️ for travelers.</p>
+    </div>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+    // Load destinations
+    async function loadDestinations() {
+        try {
+            const data = await fetch(`${API_BASE}/destinations`).then(r => r.json());
+            const grid = document.getElementById('destinationsGrid');
+            if (!data.length) { grid.innerHTML = '<p>No destinations found</p>'; return; }
+            grid.innerHTML = data.slice(0, 6).map(d => `
+                <div class="dest-card" onclick="window.location.href='destinations.html'">
+                    <img src="${d.imageUrl || 'https://source.unsplash.com/400x260/?travel,' + d.name}" 
+                         alt="${d.name}" onerror="this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400'">
+                    <div class="dest-info">
+                        <h3>🏔️ ${d.name}</h3>
+                        <p>${d.country || 'India'} ${d.bestTimeToVisit ? '• Best: ' + d.bestTimeToVisit : ''}</p>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('destinationsGrid').innerHTML = `
+                <div class="dest-card"><img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400" alt="Goa"><div class="dest-info"><h3>🏖️ Goa</h3><p>India • Best: Oct–Mar</p></div></div>
+                <div class="dest-card"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400" alt="Manali"><div class="dest-info"><h3>🏔️ Manali</h3><p>India • Best: Apr–Jun</p></div></div>
+                <div class="dest-card"><img src="https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400" alt="Jaipur"><div class="dest-info"><h3>🏰 Jaipur</h3><p>India • Best: Nov–Feb</p></div></div>
+            `;
+        }
+    }
+
+    // Load packages
+    async function loadPackages() {
+        try {
+            const data = await fetch(`${API_BASE}/packages`).then(r => r.json());
+            const grid = document.getElementById('packagesGrid');
+            if (!data.length) { grid.innerHTML = '<p>No packages found</p>'; return; }
+            grid.innerHTML = data.slice(0, 6).map(p => `
+                <div class="card package-card">
+                    <img src="${p.imageUrl || 'https://source.unsplash.com/400x200/?travel'}" 
+                         alt="${p.name}" class="card-img" style="height:180px;object-fit:cover"
+                         onerror="this.src='https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400'">
+                    <div class="card-body">
+                        <h3 class="card-title">${p.name}</h3>
+                        <p class="card-text">${p.destination?.name || 'India'} • ${p.durationDays} Days</p>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+                            <div><span class="price">${formatCurrency(p.price)}</span><br><small class="price-small">per person</small></div>
+                            <a href="package-details.html?id=${p.id}"><button class="btn btn-primary" style="padding:8px 18px;font-size:0.85rem">View Details</button></a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('packagesGrid').innerHTML = `
+                <div class="card"><div class="card-body"><h3 class="card-title">Goa Explorer</h3><p class="card-text">Goa • 4 Days</p><div style="display:flex;justify-content:space-between;align-items:center"><span class="price">₹15,000</span><a href="packages.html"><button class="btn btn-primary" style="padding:8px 18px;font-size:0.85rem">View Details</button></a></div></div></div>
+                <div class="card"><div class="card-body"><h3 class="card-title">Manali Adventure</h3><p class="card-text">Manali • 5 Days</p><div style="display:flex;justify-content:space-between;align-items:center"><span class="price">₹20,000</span><a href="packages.html"><button class="btn btn-primary" style="padding:8px 18px;font-size:0.85rem">View Details</button></a></div></div></div>
+                <div class="card"><div class="card-body"><h3 class="card-title">Jaipur Royale</h3><p class="card-text">Jaipur • 3 Days</p><div style="display:flex;justify-content:space-between;align-items:center"><span class="price">₹12,000</span><a href="packages.html"><button class="btn btn-primary" style="padding:8px 18px;font-size:0.85rem">View Details</button></a></div></div></div>
+            `;
+        }
+    }
+
+    function searchPackages() {
+        const dest = document.getElementById('searchDest').value;
+        const date = document.getElementById('searchDate').value;
+        const persons = document.getElementById('searchPersons').value;
+        const params = new URLSearchParams();
+        if (dest) params.set('search', dest);
+        if (date) params.set('date', date);
+        if (persons) params.set('persons', persons);
+        window.location.href = `packages.html?${params.toString()}`;
+    }
+
+    loadDestinations();
+    loadPackages();
+</script>
+</body>
+</html>
